@@ -93,7 +93,7 @@ function customizeLevelPanel(record, demonlist, top) {
         // flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsMax}/${listPointsMax} List Points</h3>`
 
     } else {
-        if (record.demon.position < 75 && document.getElementById('colored-labels').checked) {
+        if (record.demon.position <= 75 && document.getElementById('colored-labels').checked) {
             demonlist[record.demon.position - 1].style.background = "#f4ff8065";
         } else {
             demonlist[record.demon.position - 1].style.background = "#fff";
@@ -447,8 +447,8 @@ async function main() {
         } else {
             accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
             playerId = -1
-        if (isDemonlist) { personalizedDemonlistView(response, accountPanel) }
         }
+        if (isDemonlist) { personalizedDemonlistView(response, accountPanel) }
     }
 
     if (document.location.pathname === "/demonlist/?timemachine=true/") {fixTimeMachine()};
