@@ -14,8 +14,7 @@
         "https://pointercrate.com/*"
     ],
     "permissions": [
-        "storage",
-        "activeTab"
+        "storage"
     ],
     "content_scripts": [{
         "js": ["demonlist.js"],
