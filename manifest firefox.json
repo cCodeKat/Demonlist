@@ -1,5 +1,5 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "Demonlist+",
     "version": "1.0",
     "description": "Adds many features to the pointercrate website.",
@@ -18,13 +18,20 @@
         {
             "matches": ["https://pointercrate.com/*"],
             "js": ["demonlist.js"],
+            "css": ["demonlist-style.css", "demonlist-old.css"],
             "run_at": "document_idle"
         }
     ],
     "web_accessible_resources": [
         {
-            "resources": ["supporters.txt"],
+            "resources": ["supporters.txt", "demonlist-style.css", "demonlist-old.css"],
             "matches": ["<all_urls>"]
         }
-    ]
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+          "id": "firefox-addon@klausapp.com",
+          "update_url": "https://extension.com/update-manifest.json"
+        }
+    }
 }

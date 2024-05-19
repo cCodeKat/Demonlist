@@ -5,29 +5,35 @@ document.head.appendChild(stylesheetElement);
 const stylesheet = stylesheetElement.sheet
 var rules = stylesheet.cssRules || stylesheet.rules;
 
+isDemonlist = document.location.pathname === "/demonlist/" || document.location.pathname === "/demonlist/?timemachine=true/"
+isStatsViewer = document.location.pathname === "/demonlist/statsviewer/"
+isDarkMode = false
+
 function pointsFormula(position, progress, requirement) {
-    if (progress < requirement) {
+    if (progress < requirement || (position > 75 && progress !== 100)) {
         return 0;
     }
     let score;
-  
-    if (55 < position && position <= 150) {
-        score = 56.191*Math.pow(2, (54.147-(position+3.2))*Math.log(50)/99)+6.273;
-    } else if (35 < position && position <= 55) {
-        score = 212.61*(Math.pow(1.036, 1-position))+25.071;
-    } else if (20 < position && position <= 35) {
-        score = (250-83.389)*(Math.pow(1.0099685, 2-position))-31.152
-    } else if (0 < position && position <= 20) {
-        score = (250-100.39)*(Math.pow(1.168, 1-position))+100.39
+
+    if (position >= 56 && position <= 150) {
+        score = 1.039035131 * ((185.7 * Math.exp(-0.02715 * position)) + 14.84);
+    } else if (position >= 36 && position <= 55) {
+        score = 1.0371139743 * ((212.61 * Math.pow(1.036, 1 - position)) + 25.071);
+    } else if (position >= 21 && position <= 35) {
+        score = ((250 - 83.389) * Math.pow(1.0099685, 2 - position) - 31.152) * 1.0371139743;
+    } else if (position >= 4 && position <= 20) {
+        score = ((326.1 * Math.exp(-0.0871 * position)) + 51.09) * 1.037117142;
+    } else if (position >= 1 && position <= 3) {
+        score = (-18.2899079915 * position) + 368.2899079915;
     } else {
-        score = 0;
+        score = 0.0;
     }
-  
+
     if (progress !== 100) {
-        if (position > 75) { return 0; }
-        score = (score * Math.pow(5, ((progress - requirement)/(100 - requirement))))/10;
+        return (score * Math.pow(5, (progress - requirement) / (100 - requirement))) / 10;
+    } else {
+        return score;
     }
-    return score;
 }
 
 function supporterText() {
@@ -65,7 +71,6 @@ function customizeLevelPanel(record, demonlist, top) {
             if (playerName == "Manual ID" && flexbox.children.length > 2) {flexbox.children[2].remove(); flexbox.children[1].children[2].remove();}
             flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px"><h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3><h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">0%</h1></div>`
             flexbox.children[1].innerHTML += `<h3 style="text-align: left">0.00/${listPointsMax} List Points</h3>`
-            demonlist[record.demon.position - 1].style.background = "#fff";
         }
         return
     }
@@ -83,8 +88,6 @@ function customizeLevelPanel(record, demonlist, top) {
     if (record.progress === 100) {
         if (document.getElementById('colored-labels').checked) {
             demonlist[record.demon.position - 1].style.background = "#7aff9c65";
-        } else {
-            demonlist[record.demon.position - 1].style.background = "#fff";
         }
 
         demonlist[record.demon.position - 1].id = 'completed'
@@ -95,8 +98,6 @@ function customizeLevelPanel(record, demonlist, top) {
     } else {
         if (record.demon.position <= 75 && document.getElementById('colored-labels').checked) {
             demonlist[record.demon.position - 1].style.background = "#f4ff8065";
-        } else {
-            demonlist[record.demon.position - 1].style.background = "#fff";
         }
 
         demonlist[record.demon.position - 1].id = 'listp'
@@ -295,6 +296,9 @@ function controlBox() {
         <label class="ccontainer"><p>Detailed Data</p><input type="checkbox" checked="." id="detailed-data" value="Detailed Data">
         <span class="ccheckmark"></span></label>
 
+        <label class="ccontainer"><p>Dark Mode</p><input type="checkbox" checked="." id="darkmode" value="Dark Mode">
+        <span class="ccheckmark"></span></label>
+
     </div>\
     <div style="display: flex; align-items: center; margin-top: 20px">
         <input type="text" id="playerIdInput" placeholder="Player ID" style="display: block; flex: 1; height: 38px;">
@@ -391,7 +395,6 @@ function controlBox() {
         });
     });
 
-    // challenging...
     document.getElementById("runPersonalizedView").addEventListener("click", function() {
         playerId = document.getElementById("playerIdInput").value;
         playerName = "Manual ID"
@@ -412,9 +415,43 @@ async function loadLegacy() {
     <a class="blue hover button" id="load-legacy-button">Load more levels!</a></section>')
 }
 
+function darkModeToggle() {
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    // link.id = 'demonlist-style-dark';
+    // link.type = 'text/css';
+    link.href = chrome.runtime.getURL('demonlist-style.css');
+    
+    // Append the link element to the head
+    document.head.appendChild(link);
+}
+
+function lightModeToggle() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    // link.id = 'demonlist-style-dark';
+    // link.type = 'text/css';
+    link.href = chrome.runtime.getURL('demonlist-old.css');
+    
+    // Append the link element to the head
+    document.head.appendChild(link);
+}
+
+// function statsViewerID() {
+//     chrome.webRequest.onBeforeRequest.addListener(
+//         function(details) {
+//           const url = details.url;
+//           if (url.includes("api/v1/players/")) {
+//             console.log("Player ID detected:", url);
+//           }
+//         },
+//         { urls: ["<all_urls>"] }
+//     );
+// }
+
 async function main() {
     accountPanel = document.getElementsByClassName('nav-item hover white')[1]
-    isDemonlist = document.location.pathname.includes("/demonlist/") && !document.location.pathname.includes("/statsviewer/")
 
     if (isDemonlist) {
         supporterText();
@@ -422,8 +459,30 @@ async function main() {
         loadLegacy();
     };
 
+    // if (isStatsViewer) {
+    //     // statsViewerID();
+    //     chrome.webRequest.onBeforeRequest.addListener(
+    //         function(details) {
+    //           const url = details.url;
+    //           if (url.includes("api/v1/players/")) {
+    //             console.log("Player ID detected:", url);
+    //           }
+    //         },
+    //         { urls: ["<all_urls>"] }
+    //     )
+    // }
+
     footerFix();
     hueModifier();
+
+    // Darkmode Toggle
+    chrome.storage.local.get('darkmode', function(result) {
+        if (result['darkmode'] === true) {
+            darkModeToggle();
+        } else {
+            lightModeToggle();
+        }
+    })
 
     listPointsCalculatorElement = '<li><a class="white hover" href="https://list-calc.finite-weeb.xyz/">List Points Calculator</a></li>'
     document.getElementsByClassName('nav-hover-dropdown')[0].innerHTML += listPointsCalculatorElement
@@ -437,6 +496,7 @@ async function main() {
     let notLoggedInCheck = response.indexOf("Log in to an existing pointercrate account. ")
     if (notLoggedInCheck != -1) { 
         console.log("not logged in"); 
+        if (isDemonlist) {alert('Please log into your Pointercrate account!')}
     } else {
         // Checking whether the user has a claimed account   53290 36915
         playerName = response.substring(response.indexOf("profile-display-name") + 22, response.indexOf('<', response.indexOf("profile-display-name")))
