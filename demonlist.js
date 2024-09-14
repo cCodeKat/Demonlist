@@ -55,7 +55,7 @@ function supporterText() {
 }
 
 function customizeLevelPanel(record, demonlist, top) {
-    if (record.demon.position > 150) {
+    if (record.demon.position > top.length) {
         return 0;
     }
 
@@ -69,8 +69,8 @@ function customizeLevelPanel(record, demonlist, top) {
         if (document.getElementById('detailed-data').checked) {
             let flexbox = demonlist[record.demon.position - 1].children[0]
             if (playerName == "Manual ID" && flexbox.children.length > 2) {flexbox.children[2].remove(); flexbox.children[1].children[2].remove();}
-            flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px"><h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3><h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">0%</h1></div>`
-            flexbox.children[1].innerHTML += `<h3 style="text-align: left">0.00/${listPointsMax} List Points</h3>`
+            flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}<h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">0%</h1></div>`
+            if (record.demon.position <= 150) {flexbox.children[1].innerHTML += `<h3 style="text-align: left">0.00/${listPointsMax} List Points</h3>`}
         }
         return
     }
@@ -109,8 +109,8 @@ function customizeLevelPanel(record, demonlist, top) {
     if (document.getElementById('detailed-data').checked) {
         let flexbox = demonlist[record.demon.position - 1].children[0]
         if (playerName == "Manual ID" && flexbox.children.length > 2) {flexbox.children[2].remove(); flexbox.children[1].children[2].remove();}
-        flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px"><h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3><h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">${record.progress}%</h1></div>`
-        flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsCalculated}/${listPointsMax} List Points</h3>`
+        flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}<h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">${record.progress}%</h1></div>`
+        if (record.demon.position <= 150) {flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsCalculated}/${listPointsMax} List Points</h3>`}
     }
 
     return parseFloat(listPointsCalculated)
@@ -121,9 +121,22 @@ function customizeSmallLevelPanel(record, demonlist, top) {
 }
 
 async function personalizedDemonlistView(scrapingResponse, accountPanel) {
-    let top150 = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=75`)).json();
-    top150 = top150.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=75&limit=75`)).json());
-    let uncompletedPlacementArr = Array.from({length: 150}, (value, index) => index + 1)
+    let list_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=75`)).json();
+    list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=75&limit=75`)).json());
+
+    let demonlist = [...document.getElementsByClassName('left')[0].children];
+    timeMachineCheck = demonlist[0].className == 'panel fade blue flex'
+    demonlist = demonlist.slice(2 + (timeMachineCheck ? 1 : 0));
+
+    start = demonlist[demonlist.length - 1].children[0].children[1].children[0].textContent
+    start = start.substring(1, start.indexOf(" "))
+
+    for (let i = 0; i < (start - 150) / 100; i++) {
+        list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=${150 + i * 100}&limit=100`)).json())
+        console.log(i)
+    }
+
+    let uncompletedPlacementArr = Array.from({length: start}, (value, index) => index + 1)
 
     let playerRequest;
     if (playerId == -1) { // No player profile case
@@ -132,30 +145,28 @@ async function personalizedDemonlistView(scrapingResponse, accountPanel) {
         playerRequest = await fetch(`https://pointercrate.com/api/v1/players/${playerId}`)
         playerRequest = await playerRequest.json()
     }
-    records = playerRequest.data.records
 
-    let demonlist = [...document.getElementsByClassName('left')[0].children];
-    timeMachineCheck = demonlist[0].className == 'panel fade blue flex'
-    demonlist = demonlist.slice(3 + (timeMachineCheck ? 1 : 0));
+    records = playerRequest.data.records
 
     let listPoints = 0; 
     records.forEach((record) => {
-        listPoints += customizeLevelPanel(record, demonlist, top150);
+        console.log(record)
+        listPoints += customizeLevelPanel(record, demonlist, list_request);
         uncompletedPlacementArr = uncompletedPlacementArr.filter(n => n !== record.demon.position)
     });
 
     // For verified levels (Pointercrate's api treats those separately and with a different format)
     records_verified = playerRequest.data.verified
     records_verified.forEach((record) => {
-        fixed_record = {"demon": record, "progress": 100, "video": `${top150[record.position - 1].video}`}
-        listPoints += customizeLevelPanel(fixed_record, demonlist, top150);
+        fixed_record = {"demon": record, "progress": 100, "video": `${list_request[record.position - 1].video}`}
+        listPoints += customizeLevelPanel(fixed_record, demonlist, list_request);
         uncompletedPlacementArr = uncompletedPlacementArr.filter(n => n !== fixed_record.demon.position)
     });
 
     // For not completed levels :P
     uncompletedPlacementArr.forEach((placement) => {
         record = {"demon": {"position": placement}, "progress": 0, "video": null}
-        customizeLevelPanel(record, demonlist, top150)
+        customizeLevelPanel(record, demonlist, list_request)
     })
 
     // Updating User Area text with List Points
@@ -168,7 +179,7 @@ async function personalizedDemonlistView(scrapingResponse, accountPanel) {
 }
 
 function hueModifier() {
-    document.getElementsByClassName('nav-icon nav-nohide')[0].children[0].children[0].id = "pointercrate-image"
+    document.getElementsByTagName('header')[0].children[0].children[0].children[0].children[0].id = "pointercrate-image"
     stylesheet.insertRule(`.blue, .world-map, #world-map, .information-stripe, .tab-active, .pointercrate-image {filter: hue-rotate(0deg) !important; transition: filter 0.0s ease-in-out;}`)
 
     navbarSpot = document.getElementsByClassName("center collapse underlined see-through")[0].children[0]
@@ -256,11 +267,10 @@ function handleCheckboxChange(event) {
     const checkboxId = event.target.id;
     const isChecked = event.target.checked;
     chrome.storage.local.set({ [checkboxId]: isChecked });
-    // console.log(event.target.value + ' checkbox is now ' + (isChecked ? 'checked' : 'unchecked'));
     let demonlist
     if (checkboxId.substring(0, 4) == "view") {
         demonlist = [...document.getElementsByClassName('left')[0].children];
-        demonlist = demonlist.slice(3);
+        demonlist = demonlist.slice(2);
         if (checkboxId == "view-uncompleted") {handleLevelView("uncompleted", isChecked, demonlist)
         } else if (checkboxId == "view-listp") {handleLevelView("listp", isChecked, demonlist)
         } else if (checkboxId == "view-completed") {handleLevelView("completed", isChecked, demonlist)}
@@ -304,6 +314,8 @@ function controlBox() {
         <input type="text" id="playerIdInput" placeholder="Player ID" style="display: block; flex: 1; height: 38px;">
         <button class="blue hover button" id="runPersonalizedView" style="display: block; margin-left: 7px; font: 16px montserrat, sans-serif">Apply</button>
     </div>
+
+    
     <p style="margin-bottom: 0px;">If the setting doesn't apply instantly, try reloading the page!</p>`
     )
 
@@ -334,7 +346,7 @@ function controlBox() {
         left: 0;\
         height: 18px;\
         width: 18px;\
-        background-color: #fff;\
+        background-color: #ccc;\
         margin: 0\
         border: 3px solid #444446;\
         border-radius: 2px;\
@@ -398,9 +410,7 @@ function controlBox() {
     document.getElementById("runPersonalizedView").addEventListener("click", function() {
         playerId = document.getElementById("playerIdInput").value;
         playerName = "Manual ID"
-        console.log(playerId)
         response = `claimed-player" data-id="${playerId}">Manual ID</i> profile-display-name">Manual ID<`
-        console.log(response)
         accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
         accountPanel.children[0].children[1].innerHTML = `<span>Manual ID</span>`
         personalizedDemonlistView(response, document.getElementsByClassName('nav-item hover white')[1]);
@@ -410,16 +420,44 @@ function controlBox() {
 async function loadLegacy() {
     document.getElementsByTagName('footer')[0].insertAdjacentHTML('beforebegin', '\
     <section class="panel fade js-scroll-anim" id="load-legacy" data-anim="fade" style="opacity: 1; width: 600px; margin-left: auto; margin-right: auto">\
-    <div class="underlined"><h2>Load Legacy (disabled)</h2></div>\
-    <p>Do you want to see the levels further off the extended list? Click this button to load in 100 more levels!</p>\
+    <div class="underlined"><h2>Load Legacy</h2></div>\
+    <p>Do you want to see levels further off the extended list? Click this button to load in 100 more levels!</p>\
     <a class="blue hover button" id="load-legacy-button">Load more levels!</a></section>')
+
+    document.getElementById("load-legacy-button").addEventListener("click", async function() {
+        var level_list = document.getElementsByClassName('left')[0];
+        var start = [...level_list.children]
+        var last_panel = start[start.length - 1]
+        start = last_panel.children[0].children[1].children[0].textContent
+        start = start.substring(1, start.indexOf(" "))
+        let level_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=${start}&limit=100`)).json();
+        console.log(level_request);
+        level_request.forEach(level => {
+            panel = last_panel.cloneNode(true);
+            panel_data = panel.children[0].children;
+            panel_data[0].style.backgroundImage = `url("${level['thumbnail']}")`;
+            panel_data[0].setAttribute('data-property-value', `url("${level['thumbnail']}")`);
+            panel_data[0].children[0].href = level['video'];
+            panel_data[1].children[0].children[0].textContent = `#${level['position']} - ${level['name']}`;
+            panel_data[1].children[1].children[0].textContent = level['publisher']['name'];
+            try {panel_data[1].children[2].style.display = 'none';} catch (e) {}
+            level_list.appendChild(panel);
+        });
+
+        playerId = document.getElementById("playerIdInput").value;
+        playerName = "Manual ID"
+        response = `claimed-player" data-id="${playerId}">Manual ID</i> profile-display-name">Manual ID<`
+        accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
+        accountPanel.children[0].children[1].innerHTML = `<span>Manual ID</span>`
+        personalizedDemonlistView(response, document.getElementsByClassName('nav-item hover white')[1]);
+    });
 }
 
 function darkModeToggle() {
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    // link.id = 'demonlist-style-dark';
+    link.id = 'demonlist-style-dark';
     // link.type = 'text/css';
     link.href = chrome.runtime.getURL('demonlist-style.css');
     
@@ -428,14 +466,18 @@ function darkModeToggle() {
 }
 
 function lightModeToggle() {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    // link.id = 'demonlist-style-dark';
-    // link.type = 'text/css';
-    link.href = chrome.runtime.getURL('demonlist-old.css');
+    // const link = document.createElement('link');
+    // link.rel = 'stylesheet';
+    // // link.id = 'demonlist-style-dark';
+    // // link.type = 'text/css';
+    // link.href = chrome.runtime.getURL('demonlist-old.css');
     
-    // Append the link element to the head
-    document.head.appendChild(link);
+    // // Append the link element to the head
+    // document.head.appendChild(link);
+    try {
+        var cssNode = document.getElementById('demonlist-style-dark');
+        cssNode && cssNode.parentNode.removeChild(cssNode);
+    } catch (error) {}
 }
 
 // function statsViewerID() {
@@ -493,9 +535,8 @@ async function main() {
     // response = 'claimed-player" data-id="50381">Slijee</i> profile-display-name">Slijee<'; // Debug line (cries in 0 list points)
 
     // Checking whether the user is logged in
-    let notLoggedInCheck = response.indexOf("Log in to an existing pointercrate account. ")
-    if (notLoggedInCheck != -1) { 
-        console.log("not logged in"); 
+    let notLoggedInCheck = response.indexOf("Log into an existing pointercrate account. ")
+    if (notLoggedInCheck != -1) {
         if (isDemonlist) {alert('Please log into your Pointercrate account!')}
     } else {
         // Checking whether the user has a claimed account   53290 36915
@@ -512,6 +553,9 @@ async function main() {
     }
 
     if (document.location.pathname === "/demonlist/?timemachine=true/") {fixTimeMachine()};
+
+    // Poopstain's request
+    if (document.location.pathname === "/demonlist/69") {var footer = document.getElementsByTagName("footer")[0]; footer.innerHTML += '<img src="https://media.discordapp.net/attachments/1071571426240368660/1077018604765196288/GIF-221116_170304.gif?ex=66e6cdfd&is=66e57c7d&hm=5b081e85c9a231b84c4e42d808ae68ae9ae543dec0c934c4e6a6fd71fe669240&=&width=960&height=960" />'};
 }
 
 main();

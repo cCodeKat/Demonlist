@@ -189,4 +189,8 @@
     #login div:first-child {
         border-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--light-3) 15%, var(--light-3) 85%, rgba(0, 0, 0, 0) 100%) 1;
     }
+
+    .hover, .hover:hover:not(.disabled):not([disabled]) {
+        transition-duration: 0s;
+    }
     /* } */
