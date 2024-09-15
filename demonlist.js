@@ -1,13 +1,19 @@
 var playerId
 var playerName
 const stylesheetElement = document.createElement("style");
-document.head.appendChild(stylesheetElement);
+
+// Favicon Icons
+document.head.innerHTML += `\
+<link rel="apple-touch-icon" sizes="180x180" href="${chrome.runtime.getURL("icons/apple-touch-icon.png")}">\
+<link rel="icon" type="image/png" sizes="32x32" href="${chrome.runtime.getURL("icons/favicon-32x32.png")}">\
+<link rel="icon" type="image/png" sizes="16x16" href="${chrome.runtime.getURL("icons/favicon-16x16.png")}">\
+<link rel="manifest" href="${chrome.runtime.getURL("icons/site.webmanifest")}"></link>`;
+
+document.head.appendChild(stylesheetElement); // Hue Changer
 const stylesheet = stylesheetElement.sheet
 var rules = stylesheet.cssRules || stylesheet.rules;
 
 isDemonlist = document.location.pathname === "/demonlist/" || document.location.pathname === "/demonlist" || document.location.pathname === "/demonlist/?timemachine=true/" || document.location.pathname === "/demonlist/?timemachine=true" || document.location.pathname === "/demonlist/?submitter=true";
-// isStatsViewer = document.location.pathname === "/demonlist/statsviewer/" || 
-isDarkMode = false
 
 function pointsFormula(position, progress, requirement) {
     if (progress < requirement || (position > 75 && progress !== 100)) {
@@ -127,10 +133,6 @@ function customizeLevelPanel(record, demonlist, top) {
     return parseFloat(listPointsCalculated)
 }
 
-function customizeSmallLevelPanel(record, demonlist, top) {
- // TODO
-}
-
 async function personalizedDemonlistView(accountPanel) {
     let list_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=75`)).json();
     list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=75&limit=75`)).json());
@@ -176,12 +178,13 @@ async function personalizedDemonlistView(accountPanel) {
         customizeLevelPanel(record, demonlist, list_request)
     })
 
-    // Updating User Area text with List Points
-    if (playerId !== 1) {accountPanel.children[0].children[0].innerHTML = `<span>${listPoints.toFixed(2)} POINTS</span>`;}
+    console.log(playerId)
 
-    if (playerName == "Manual ID") {
-        playerName = playerRequest.data.name
-        accountPanel.children[0].children[1].innerHTML = `<span>${playerName}</span>`
+    // Updating User Area text with List Points
+    if (playerId !== -1) {
+        console.log(listPoints.toFixed(2))
+        console.log(accountPanel)
+        accountPanel.children[0].children[0].innerHTML = `<span>${listPoints.toFixed(2)} POINTS</span>`;
     }
 }
 
@@ -224,10 +227,6 @@ function footerFix() {
     footer.children[2].style.setProperty('justify-content', 'center')
     footer.children[1].children[2].innerHTML = ""
     footer.children[1].children[0].innerHTML = ""
-    stylesheet.insertRule('footer > span {font-size: 20px}')
-    stylesheet.insertRule('footer > div {font-size: 14px}')
-    stylesheet.insertRule('footer .flex>* {max-width: 75%}')
-    stylesheet.insertRule('footer div:last-of-type {margin-bottom: 24px}')
     footer.style.setProperty('box-shadow', '0 0 20px 0 rgba(0,0,0,.1)')
     footer.style.setProperty('border', '1px #d3d3d3 dashed;')
     footer.style.setProperty('padding-left', 'calc(50% - 1072px/2)')
@@ -295,19 +294,11 @@ function controlBox() {
     </div>\
     <div style="display: flex; flex-direction: column; margin-top: 20px">
         <div style="display: flex; align-items: center;">
-            <input type="text" id="playerIdInput" placeholder="Player ID" style="display: block; flex: 1; height: 38px;">
+            <input type="text" onFocus="document.getElementById('playerIdInputList').classList.add('show');" onBlur="setTimeout(() => {document.getElementById('playerIdInputList').classList.remove('show');}, 100);" id="playerIdInput" placeholder="Enter Player..." style="display: block; flex: 1; height: 38px;">
             <button class="blue hover button" id="runPersonalizedView" style="display: block; margin-left: 7px; font: 16px montserrat, sans-serif">Apply</button>
         </div>
-        <ul id="playerIdInputList" class="show">
-        <li>Oh No</li>
-        <li>Oh Noa</li>
-        <li>Oh Nob</li>
-        <li>Oh Nob</li>
-        <li>Oh Noc</li>
-        <li>Oh Nod</li>
-        </ul>
+        <ul id="playerIdInputList"></ul>
     </div>
-
     
     <p style="margin-bottom: 0px;">If the setting doesn't apply instantly, try reloading the page!</p>`
     )
@@ -332,13 +323,43 @@ function controlBox() {
     });
 
     document.getElementById("runPersonalizedView").addEventListener("click", function() {
-        playerId = document.getElementById("playerIdInput").value;
-        playerName = "Manual ID"
-        response = `claimed-player" data-id="${playerId}">Manual ID</i> profile-display-name">Manual ID<`
+        playerId = document.getElementById("playerIdInput").getAttribute('data-id');
+        playerName = document.getElementById("playerIdInput").value;
+        response = `claimed-player" data-id="${playerId}">${playerName}</i> profile-display-name">${playerName}<`
         accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
-        accountPanel.children[0].children[1].innerHTML = `<span>Manual ID</span>`
-        personalizedDemonlistView(response, document.getElementsByClassName('nav-item hover white')[1]);
+        accountPanel.children[0].children[1].innerHTML = `<span>${playerName}</span>`
+        personalizedDemonlistView(document.getElementsByClassName('nav-item hover white')[2]);
     });
+
+    let playerList = document.getElementById("playerIdInputList");
+    let playerSelector = document.getElementById("playerIdInput");
+    playerSelector.addEventListener("input", async (input) => {
+        player_request = await ((await fetch(`https://pointercrate.com/api/v1/players/ranking/?limit=10&name_contains=${playerSelector.value}`)).json());
+
+        while (playerList.firstChild) {
+            playerList.removeChild(playerList.firstChild);
+        }
+
+        player_request.forEach(player => {
+            let listItem = document.createElement('li');
+            listItem.textContent = `#${player.rank} ${player.name}`;
+            listItem.setAttribute('data-id', player.id);
+            playerList.appendChild(listItem);
+        });
+    });
+
+    console.log("adding listener")
+    playerList.addEventListener("click", (event) => {
+        console.log(event)
+        let player = event.target;
+        let id = player.getAttribute("data-id");
+        let text = player.innerText;
+        if (player && (id || id === 0)) {
+            playerList.classList.remove("show");
+            playerSelector.setAttribute("data-id", id);
+            playerSelector.value = text.substring(text.indexOf(" ")+1, text.length);
+        };
+    })
 }
 
 async function loadLegacy() {
@@ -367,7 +388,7 @@ async function loadLegacy() {
             level_list.appendChild(panel);
         });
 
-        personalizedDemonlistView(response, document.getElementsByClassName('nav-item hover white')[1]);
+        personalizedDemonlistView(document.getElementsByClassName('nav-item hover white')[2]);
     });
 }
 
@@ -405,6 +426,8 @@ async function main() {
 
     document.getElementsByClassName('nav-hover-dropdown')[0].innerHTML += '\
     <li><a class="white hover" href="https://list-calc.finite-weeb.xyz/">List Points Calculator</a></li>'
+
+    document.getElementsByClassName('nav-item hover white')[1].children[0].children[1].textContent = 'Docs'
 
     response = "<!DOCTYPE html><html "
     try {response = await (await fetch("https://pointercrate.com/account")).text();} catch (e) {}
