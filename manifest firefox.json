@@ -17,15 +17,15 @@
     ],
     "content_scripts": [{
         "js": ["demonlist.js"],
-        "css": ["demonlist-style.css", "demonlist-old.css"],
+        "css": ["demonlist-old.css", "demonlist-style.css"],
         "matches": ["https://pointercrate.com/*", "https://www.pointercrate.com/*"],
         "run_at": "document_idle"
     }],
     "web_accessible_resources": [{
         "resources": [
             "supporters.txt",
-            "demonlist-style.css",
             "demonlist-old.css",
+            "demonlist-style.css",
             "icons/android-chrome-192x192.png",
             "icons/android-chrome-512x512.png",
             "icons/apple-touch-icon.png",
