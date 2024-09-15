@@ -5,8 +5,8 @@ document.head.appendChild(stylesheetElement);
 const stylesheet = stylesheetElement.sheet
 var rules = stylesheet.cssRules || stylesheet.rules;
 
-isDemonlist = document.location.pathname === "/demonlist/" || document.location.pathname === "/demonlist/?timemachine=true/"
-isStatsViewer = document.location.pathname === "/demonlist/statsviewer/"
+isDemonlist = document.location.pathname === "/demonlist/" || document.location.pathname === "/demonlist" || document.location.pathname === "/demonlist/?timemachine=true/" || document.location.pathname === "/demonlist/?timemachine=true" || document.location.pathname === "/demonlist/?submitter=true";
+// isStatsViewer = document.location.pathname === "/demonlist/statsviewer/" || 
 isDarkMode = false
 
 function pointsFormula(position, progress, requirement) {
@@ -68,8 +68,16 @@ function customizeLevelPanel(record, demonlist, top) {
         demonlist[record.demon.position - 1].id = 'uncompleted'
         if (document.getElementById('detailed-data').checked) {
             let flexbox = demonlist[record.demon.position - 1].children[0]
-            if (playerName == "Manual ID" && flexbox.children.length > 2) {flexbox.children[2].remove(); flexbox.children[1].children[2].remove();}
-            flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}<h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">0%</h1></div>`
+            if (flexbox.children.length > 2) {
+                try {
+                    flexbox.children[2].remove(); 
+                    flexbox.children[1].children[2].remove();
+                } catch (e) {console.log("oops")}
+            }
+            flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">\
+            ${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}\
+            <h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">0%</h1></div>`
+
             if (record.demon.position <= 150) {flexbox.children[1].innerHTML += `<h3 style="text-align: left">0.00/${listPointsMax} List Points</h3>`}
         }
         return
@@ -91,9 +99,6 @@ function customizeLevelPanel(record, demonlist, top) {
         }
 
         demonlist[record.demon.position - 1].id = 'completed'
-        // let flexbox = demonlist[record.demon.position - 1].children[0]
-        // flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px"><h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3><h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">100%</h1></div>`
-        // flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsMax}/${listPointsMax} List Points</h3>`
 
     } else {
         if (record.demon.position <= 75 && document.getElementById('colored-labels').checked) {
@@ -101,15 +106,21 @@ function customizeLevelPanel(record, demonlist, top) {
         }
 
         demonlist[record.demon.position - 1].id = 'listp'
-        // let flexbox = demonlist[record.demon.position - 1].children[0]
-        // flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px"><h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3><h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">${record.progress}%</h1></div>`
-        // flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsCalculated}/${listPointsMax} List Points</h3>`
     }
 
     if (document.getElementById('detailed-data').checked) {
         let flexbox = demonlist[record.demon.position - 1].children[0]
-        if (playerName == "Manual ID" && flexbox.children.length > 2) {flexbox.children[2].remove(); flexbox.children[1].children[2].remove();}
-        flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}<h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">${record.progress}%</h1></div>`
+        if (flexbox.children.length > 2) {
+            try {
+                flexbox.children[2].remove();
+                flexbox.children[1].children[2].remove();
+            } catch (e) {console.log('ooops')}
+        }
+
+        flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">\
+        ${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}\
+        <h1 style="margin-top: 0px; margin-bottom: 0px; text-align: right">${record.progress}%</h1></div>`
+
         if (record.demon.position <= 150) {flexbox.children[1].innerHTML += `<h3 style="text-align: left">${listPointsCalculated}/${listPointsMax} List Points</h3>`}
     }
 
@@ -117,10 +128,10 @@ function customizeLevelPanel(record, demonlist, top) {
 }
 
 function customizeSmallLevelPanel(record, demonlist, top) {
-
+ // TODO
 }
 
-async function personalizedDemonlistView(scrapingResponse, accountPanel) {
+async function personalizedDemonlistView(accountPanel) {
     let list_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=75`)).json();
     list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=75&limit=75`)).json());
 
@@ -130,18 +141,15 @@ async function personalizedDemonlistView(scrapingResponse, accountPanel) {
 
     start = demonlist[demonlist.length - 1].children[0].children[1].children[0].textContent
     start = start.substring(1, start.indexOf(" "))
+    let uncompletedPlacementArr = Array.from({length: start}, (value, index) => index + 1)
 
     for (let i = 0; i < (start - 150) / 100; i++) {
         list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=${150 + i * 100}&limit=100`)).json())
-        console.log(i)
     }
 
-    let uncompletedPlacementArr = Array.from({length: start}, (value, index) => index + 1)
+    let playerRequest = {"data": {"published": [], "records": [], "created": [], "verified": []}}
 
-    let playerRequest;
-    if (playerId == -1) { // No player profile case
-        playerRequest = {"data": {"published": [], "records": [], "created": [], "verified": []}}
-    } else {
+    if (playerId != -1) {
         playerRequest = await fetch(`https://pointercrate.com/api/v1/players/${playerId}`)
         playerRequest = await playerRequest.json()
     }
@@ -150,7 +158,6 @@ async function personalizedDemonlistView(scrapingResponse, accountPanel) {
 
     let listPoints = 0; 
     records.forEach((record) => {
-        console.log(record)
         listPoints += customizeLevelPanel(record, demonlist, list_request);
         uncompletedPlacementArr = uncompletedPlacementArr.filter(n => n !== record.demon.position)
     });
@@ -183,13 +190,19 @@ function hueModifier() {
     stylesheet.insertRule(`.blue, .world-map, #world-map, .information-stripe, .tab-active, .pointercrate-image {filter: hue-rotate(0deg) !important; transition: filter 0.0s ease-in-out;}`)
 
     navbarSpot = document.getElementsByClassName("center collapse underlined see-through")[0].children[0]
-    navbarSpot.insertAdjacentHTML('afterend', '<div class="nav-group"><a class="nav-item white" style="cursor: default"><span style="display:flex; flex-direction:column;"><span style="font-size: 50%">HUE SLIDER</span><div class="slidecontainer"><input type="range" min="0" max="360" value="0" class="slider" id="colorSlider"></div></a></div></div>')
+    navbarSpot.insertAdjacentHTML('afterend', '\
+        <div class="nav-group">\
+        <a class="nav-item white hover" style="cursor: default">\
+        <span style="display:flex; flex-direction:column;">\
+        <span style="font-size: 50%">HUE SLIDER</span>\
+        <div class="slidecontainer">\
+        <input type="range" min="0" max="360" value="0" class="slider" id="colorSlider">\
+        </div></a></div></div>')
 
     var slider = document.getElementById("colorSlider");
     chrome.storage.local.get("hueValue", function(data) {
         if(data.hueValue !== undefined) {
             slider.value = data.hueValue;
-            // Apply the filter using the retrieved value
             slider.dispatchEvent(new Event('input'));
         }
     });
@@ -220,36 +233,6 @@ function footerFix() {
     footer.style.setProperty('padding-left', 'calc(50% - 1072px/2)')
     footer.style.setProperty('padding-right', 'calc(50% - 1072px/2)')
 }
-
-// function initializeTimeMachine() {
-//     let formHtml = document.getElementById("time-machine-form");
-//     if (formHtml === null)
-//         return;
-//     var timeMachineForm = new Form(formHtml);
-//     var inputs = ['year', 'month', 'day', 'hour', 'minute', 'second'].map(name=>timeMachineForm.input("time-machine-" + name));
-//     for (let input of inputs) {
-//         input.addValidator(input=>input.dropdown.selected !== undefined, "Please specify a value");
-//     }
-//     var offset = new Date().getTimezoneOffset();
-//     var offsetHours = Math.abs(offset) / 60;
-//     var offsetMinutes = Math.abs(offset) % 60;
-//     const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", ];
-//     timeMachineForm.onSubmit(()=>{
-//         let when = inputs[0].value + "-" + ("" + (MONTHS.indexOf(inputs[1].value) + 1)).padStart(2, '0') + "-" + ("" + inputs[2].value).padStart(2, '0') + "T" + ("" + inputs[3].value).padStart(2, '0') + ":" + ("" + inputs[4].value).padStart(2, '0') + ":" + ("" + inputs[5].value).padStart(2, '0') + (offsetHours < 0 ? "%2B" : "-") + (offsetHours + "").padStart(2, "0") + ":" + (offsetMinutes + "").padStart(2, "0");
-//         document.cookie = "when=" + when;
-//         gtag('event', 'time-machine-usage', {
-//             'event-category': 'demonlist',
-//             'label': when
-//         });
-//         window.location = "/demonlist/";
-//     }
-//     )
-// }
-
-// function fixTimeMachine() {
-//     document.getElementById("time-machine-form").children[2].innerHTML = ""
-//     document.getElementById("time-machine-form").children[2].innerHTML = ""
-// }
 
 function handleLevelView(elementId, state, demonlist) {
     if (!state) {
@@ -310,83 +293,24 @@ function controlBox() {
         <span class="ccheckmark"></span></label>
 
     </div>\
-    <div style="display: flex; align-items: center; margin-top: 20px">
-        <input type="text" id="playerIdInput" placeholder="Player ID" style="display: block; flex: 1; height: 38px;">
-        <button class="blue hover button" id="runPersonalizedView" style="display: block; margin-left: 7px; font: 16px montserrat, sans-serif">Apply</button>
+    <div style="display: flex; flex-direction: column; margin-top: 20px">
+        <div style="display: flex; align-items: center;">
+            <input type="text" id="playerIdInput" placeholder="Player ID" style="display: block; flex: 1; height: 38px;">
+            <button class="blue hover button" id="runPersonalizedView" style="display: block; margin-left: 7px; font: 16px montserrat, sans-serif">Apply</button>
+        </div>
+        <ul id="playerIdInputList" class="show">
+        <li>Oh No</li>
+        <li>Oh Noa</li>
+        <li>Oh Nob</li>
+        <li>Oh Nob</li>
+        <li>Oh Noc</li>
+        <li>Oh Nod</li>
+        </ul>
     </div>
 
     
     <p style="margin-bottom: 0px;">If the setting doesn't apply instantly, try reloading the page!</p>`
     )
-
-    stylesheet.insertRule('.ccontainer {\
-        display: block;\
-        position: relative;\
-        padding-left: 24px;\
-        margin-bottom: 12px;\
-        cursor: pointer;\
-        font-size: 17px;\
-        -webkit-user-select: none;\
-        -moz-user-select: none;\
-        -ms-user-select: none;\
-        user-select: none;\
-      }')
-      
-    stylesheet.insertRule('.ccontainer input {\
-        position: absolute;\
-        opacity: 0;\
-        cursor: pointer;\
-        height: 0;\
-        width: 0;\
-    }')
-      
-    stylesheet.insertRule('.ccheckmark {\
-        position: absolute;\
-        top: 0;\
-        left: 0;\
-        height: 18px;\
-        width: 18px;\
-        background-color: #ccc;\
-        margin: 0\
-        border: 3px solid #444446;\
-        border-radius: 2px;\
-      }')
-      
-    stylesheet.insertRule('.ccontainer:hover input ~ .ccheckmark {\
-        filter: brightness(0.75);\
-      }')
-      
-    stylesheet.insertRule('.ccontainer input:checked ~ .ccheckmark {\
-        background-color: #444446;\
-      }')
-      
-    stylesheet.insertRule('.ccheckmark:after {\
-        display: none;\
-        content: "";\
-        position: absolute;\
-        border-color: #444446;\
-      }')
-      
-    stylesheet.insertRule('.ccontainer input:checked ~ .ccheckmark:after {\
-        display: block;\
-      }')
-      
-    stylesheet.insertRule('.ccontainer .ccheckmark:after {\
-        left: 3.6px;\
-        top: 0.8px;\
-        width: 4px;\
-        height: 8px;\
-        border: solid white;\
-        border-width: 0 3px 3px 0;\
-        -webkit-transform: rotate(45deg);\
-        -ms-transform: rotate(45deg);\
-        transform: rotate(45deg);\
-    }')
-
-    stylesheet.insertRule('.ccontainer span {\
-        border: 2px solid #444446; border-radius: 2px; box-sizing: border-box;\
-    }')
-
 
     var checkboxes = document.querySelectorAll('#control-box input[type="checkbox"]');
     checkboxes.forEach(function(checkbox) {
@@ -427,11 +351,10 @@ async function loadLegacy() {
     document.getElementById("load-legacy-button").addEventListener("click", async function() {
         var level_list = document.getElementsByClassName('left')[0];
         var start = [...level_list.children]
-        var last_panel = start[start.length - 1]
+        var last_panel = start[start.length - 1] 
         start = last_panel.children[0].children[1].children[0].textContent
         start = start.substring(1, start.indexOf(" "))
         let level_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=${start}&limit=100`)).json();
-        console.log(level_request);
         level_request.forEach(level => {
             panel = last_panel.cloneNode(true);
             panel_data = panel.children[0].children;
@@ -444,55 +367,31 @@ async function loadLegacy() {
             level_list.appendChild(panel);
         });
 
-        playerId = document.getElementById("playerIdInput").value;
-        playerName = "Manual ID"
-        response = `claimed-player" data-id="${playerId}">Manual ID</i> profile-display-name">Manual ID<`
-        accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
-        accountPanel.children[0].children[1].innerHTML = `<span>Manual ID</span>`
         personalizedDemonlistView(response, document.getElementsByClassName('nav-item hover white')[1]);
     });
 }
 
-function darkModeToggle() {
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.id = 'demonlist-style-dark';
-    // link.type = 'text/css';
-    link.href = chrome.runtime.getURL('demonlist-style.css');
-    
-    // Append the link element to the head
-    document.head.appendChild(link);
+function darkModeToggle(bool) {
+    if (bool === true) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.id = 'demonlist-style-dark';
+        link.type = 'text/css';
+        link.href = chrome.runtime.getURL('demonlist-style.css');
+        document.head.appendChild(link);
+    } else {
+        try {
+            var cssNode = document.getElementById('demonlist-style-dark');
+            cssNode && cssNode.parentNode.removeChild(cssNode);
+        } catch (error) {}
+    }
 }
-
-function lightModeToggle() {
-    // const link = document.createElement('link');
-    // link.rel = 'stylesheet';
-    // // link.id = 'demonlist-style-dark';
-    // // link.type = 'text/css';
-    // link.href = chrome.runtime.getURL('demonlist-old.css');
-    
-    // // Append the link element to the head
-    // document.head.appendChild(link);
-    try {
-        var cssNode = document.getElementById('demonlist-style-dark');
-        cssNode && cssNode.parentNode.removeChild(cssNode);
-    } catch (error) {}
-}
-
-// function statsViewerID() {
-//     chrome.webRequest.onBeforeRequest.addListener(
-//         function(details) {
-//           const url = details.url;
-//           if (url.includes("api/v1/players/")) {
-//             console.log("Player ID detected:", url);
-//           }
-//         },
-//         { urls: ["<all_urls>"] }
-//     );
-// }
 
 async function main() {
+    chrome.storage.local.get('darkmode', function(result) {
+        darkModeToggle(result['darkmode'])
+    })
+
     accountPanel = document.getElementsByClassName('nav-item hover white')[1]
 
     if (isDemonlist) {
@@ -501,61 +400,43 @@ async function main() {
         loadLegacy();
     };
 
-    // if (isStatsViewer) {
-    //     // statsViewerID();
-    //     chrome.webRequest.onBeforeRequest.addListener(
-    //         function(details) {
-    //           const url = details.url;
-    //           if (url.includes("api/v1/players/")) {
-    //             console.log("Player ID detected:", url);
-    //           }
-    //         },
-    //         { urls: ["<all_urls>"] }
-    //     )
-    // }
-
     footerFix();
     hueModifier();
 
-    // Darkmode Toggle
-    chrome.storage.local.get('darkmode', function(result) {
-        if (result['darkmode'] === true) {
-            darkModeToggle();
-        } else {
-            lightModeToggle();
-        }
-    })
+    document.getElementsByClassName('nav-hover-dropdown')[0].innerHTML += '\
+    <li><a class="white hover" href="https://list-calc.finite-weeb.xyz/">List Points Calculator</a></li>'
 
-    listPointsCalculatorElement = '<li><a class="white hover" href="https://list-calc.finite-weeb.xyz/">List Points Calculator</a></li>'
-    document.getElementsByClassName('nav-hover-dropdown')[0].innerHTML += listPointsCalculatorElement
+    response = "<!DOCTYPE html><html "
+    try {response = await (await fetch("https://pointercrate.com/account")).text();} catch (e) {}
+    playerId = -1
 
-    let response = await fetch("https://pointercrate.com/account")
-    response = await response.text();
-    // response = 'claimed-player" data-id="53408">Zoink</i> profile-display-name">Zoink<'; // Debug line (cries in 0 list points)
-    // response = 'claimed-player" data-id="50381">Slijee</i> profile-display-name">Slijee<'; // Debug line (cries in 0 list points)
-
-    // Checking whether the user is logged in
-    let notLoggedInCheck = response.indexOf("Log into an existing pointercrate account. ")
-    if (notLoggedInCheck != -1) {
-        if (isDemonlist) {alert('Please log into your Pointercrate account!')}
-    } else {
-        // Checking whether the user has a claimed account   53290 36915
+    try {
         playerName = response.substring(response.indexOf("profile-display-name") + 22, response.indexOf('<', response.indexOf("profile-display-name")))
+        if (playerName === "<!DOCTYPE html><html ") {
+            playerName = "LOGIN"
+        }
         accountPanel.children[0].children[1].innerHTML = `<span>${playerName}</span>`
+        accountPanel.children[0].children[0].innerHTML = '<span>0.00 POINTS</span>';
+
+        chrome.storage.local.get("player_id", function(result) {
+            if (result.player_id != undefined) {
+                playerId = result.player_id;
+            }
+        })
 
         if (response.indexOf("claimed-player") != -1) {
             playerId = response.substring(response.indexOf('data-id="') + 9, response.indexOf('"', response.indexOf('data-id="') + 9))
-        } else {
-            accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
-            playerId = -1
+            chrome.storage.local.set({"player_id": playerId}, function(){});
         }
-        if (isDemonlist) { personalizedDemonlistView(response, accountPanel) }
-    }
+    } catch (e) {}
 
-    if (document.location.pathname === "/demonlist/?timemachine=true/") {fixTimeMachine()};
+    if (isDemonlist) { personalizedDemonlistView(response, accountPanel) }
 
-    // Poopstain's request
-    if (document.location.pathname === "/demonlist/69") {var footer = document.getElementsByTagName("footer")[0]; footer.innerHTML += '<img src="https://media.discordapp.net/attachments/1071571426240368660/1077018604765196288/GIF-221116_170304.gif?ex=66e6cdfd&is=66e57c7d&hm=5b081e85c9a231b84c4e42d808ae68ae9ae543dec0c934c4e6a6fd71fe669240&=&width=960&height=960" />'};
+    // Poopstain's request :3
+    if (document.location.pathname === "/demonlist/69") {
+        var footer = document.getElementsByTagName("footer")[0]; 
+        footer.innerHTML += '<img src="https://media.discordapp.net/attachments/1071571426240368660/1077018604765196288/GIF-221116_170304.gif?ex=66e6cdfd&is=66e57c7d&hm=5b081e85c9a231b84c4e42d808ae68ae9ae543dec0c934c4e6a6fd71fe669240&=&width=960&height=960" />'
+    };
 }
 
 main();

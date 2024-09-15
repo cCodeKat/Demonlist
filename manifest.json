@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Demonlist+",
-    "version": "1.1",
+    "version": "1.2",
     "icons": {
         "16": "icons/icon-16.png",
         "32": "icons/icon-32.png",
@@ -11,7 +11,8 @@
     },
     "description": "Adds many features to the pointercrate website. ",
     "host_permissions": [
-        "https://pointercrate.com/*"
+        "https://pointercrate.com/*",
+        "https://www.pointercrate.com/*"
     ],
     "permissions": [
         "storage"
@@ -19,7 +20,7 @@
     "content_scripts": [{
         "js": ["demonlist.js"],
         "css": ["demonlist-style.css", "demonlist-old.css"],
-        "matches": ["https://pointercrate.com/*"],
+        "matches": ["https://pointercrate.com/*", "https://www.pointercrate.com/*"],
         "run_at": "document_idle"
     }],
     "web_accessible_resources": [{

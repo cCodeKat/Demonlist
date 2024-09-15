@@ -27,21 +27,25 @@
     html {
         color-scheme: light;
     }
-    
+
     * {
         border-color: var(--light-3) !important;
     }
 
-    .blue, .button, footer > span, footer > div > div > h2 {
-        color: var(--light-1) !important;
+    .blue {
+        color: white !important;
     }
     
-    h1, h2, h3, h4, h5, h6, a, b, .information-stripe span {
+    h1, h2, h3, h4, h5, h6, a, b, input.button, .information-stripe span {
         color: var(--text-primary) !important;
     }
     
     p, span, li, i, q, code, input, .button.small, .tab-content {
         color: var(--text-secondary) !important;
+    }
+
+    .blue {
+        color: white !important;
     }
     
     body {
@@ -51,6 +55,7 @@
     header {
         & nav {
             background-color: var(--light-2);
+            transition-duration: 0s;
         }
         
         & img {
@@ -71,7 +76,7 @@
         background-color: var(--light-2);
         color: var(--text-secondary);
         
-        &:hover:not(:first-child), &.active:not(:first-child) {
+        &:hover, &.active {
             background-color: var(--light-3) !important;
             color: var(--text-primary) !important;
         }
@@ -182,9 +187,9 @@
         }
     }
     
-    /* .overlay {
-        background: rgba(0, 0, 0, .8);
-    } */
+    .overlay {
+        background: rgba(255, 255, 255, .8);
+    }
     
     #login div:first-child {
         border-image: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--light-3) 15%, var(--light-3) 85%, rgba(0, 0, 0, 0) 100%) 1;
@@ -193,4 +198,73 @@
     .hover, .hover:hover:not(.disabled):not([disabled]) {
         transition-duration: 0s;
     }
-    /* } */
+
+    .ccontainer {
+        display: block;
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        font-size: 17px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .ccontainer input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .ccheckmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 18px;
+        width: 18px;
+        background-color: var(--light-4);
+        margin: 0;
+        border: 3px solid var(--light-3);
+        border-radius: 2px;
+      }
+
+    .ccontainer:hover input ~ .ccheckmark {
+        filter: brightness(0.75);
+    }
+
+    .ccontainer input:checked ~ .ccheckmark {
+        background-color: var(--light-3);
+    }
+
+    .ccheckmark:after {
+        display: none;
+        content: "";
+        position: absolute;
+        border-color: var(--light-3);
+    }
+
+    .ccontainer input:checked ~ .ccheckmark:after {
+        display: block;
+    }
+
+    .ccontainer .ccheckmark:after {
+        left: 3.6px;
+        top: 0.8px;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+
+    .ccontainer span {
+        border: 2px solid var(--light-3); 
+        border-radius: 2px; 
+        box-sizing: border-box;
+    }

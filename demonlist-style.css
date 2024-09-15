@@ -12,8 +12,8 @@
         --dark-2: hsl(240, 20%, 17%);
         --dark-3: hsl(240, 20%, 24%);
         --dark-4: hsl(240, 20%, 31%);
-        --text-primary: hsl(240, 12%, 95%);
-        --text-secondary: hsl(240, 10%, 75%);
+        --text-primary-d: hsl(240, 12%, 95%);
+        --text-secondary-d: hsl(240, 10%, 75%);
         --bg-yellow: hsl(60, 20%, 20%);
         --bg-green: hsl(120, 20%, 20%);
         --bg-red: hsl(0, 20%, 20%);
@@ -33,11 +33,11 @@
     }
     
     h1, h2, h3, h4, h5, h6, a, b, input.button, .information-stripe span {
-        color: var(--text-primary) !important;
+        color: var(--text-primary-d) !important;
     }
     
     p, span, li, i, q, code, input, .button.small, .tab-content {
-        color: var(--text-secondary) !important;
+        color: var(--text-secondary-d) !important;
     }
     
     body {
@@ -66,11 +66,11 @@
     
     .white:not([style*="background"]) {
         background-color: var(--dark-2);
-        color: var(--text-secondary);
+        color: var(--text-secondary-d);
         
         &:hover, &.active {
             background-color: var(--dark-3) !important;
-            color: var(--text-primary) !important;
+            color: var(--text-primary-d) !important;
         }
     }
     
@@ -101,7 +101,7 @@
         }
         
         & tr {
-            color: var(--text-secondary);
+            color: var(--text-secondary-d);
         }
         
         &#history-table tr {
@@ -190,4 +190,106 @@
     .hover, .hover:hover:not(.disabled):not([disabled]) {
         transition-duration: 0s;
     }
-    /* } */
+
+    .ccontainer {
+        display: block;
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        font-size: 17px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .ccontainer input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .ccheckmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 18px;
+        width: 18px;
+        background-color: var(--dark-4);
+        margin: 0;
+        border: 3px solid var(--dark-3);
+        border-radius: 2px;
+      }
+
+    .ccontainer:hover input ~ .ccheckmark {
+        filter: brightness(0.75);
+    }
+
+    .ccontainer input:checked ~ .ccheckmark {
+        background-color: var(--dark-3);
+    }
+
+    .ccheckmark:after {
+        display: none;
+        content: "";
+        position: absolute;
+        border-color: var(--dark-3);
+    }
+
+    .ccontainer input:checked ~ .ccheckmark:after {
+        display: block;
+    }
+
+    .ccontainer .ccheckmark:after {
+        left: 3.6px;
+        top: 0.8px;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+
+    .ccontainer span {
+        border: 2px solid var(--dark-3); 
+        border-radius: 2px; 
+        box-sizing: border-box;
+    }
+
+    /* .slidecontainer::-webkit-slider-thumb {
+        background: 
+    } */
+
+    #playerIdInputList {
+        position: fixed;
+        display: none;
+        opacity: 0;
+        width: 260px;
+        max-height: 600px;
+        overflow-y: scroll;
+        margin: 0px;
+        padding-inline-start: 0px;
+        background-color: var(--dark-3);
+        box-shadow:0px 0px 15px rgba(0,0,0,0.2);
+        z-index: 999;
+        margin-top: 38px;
+    }
+
+    #playerIdInputList.show {
+        display: block;
+        opacity: 1;
+    }
+
+    #playerIdInputList li{
+        padding: 4px;
+        text-align: left;
+        text-indent: 3px;
+        transition: background-color 500ms;
+        background-color: var(--dark-3);
+        width: inherit;
+    }

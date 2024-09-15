@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Demonlist+",
-    "version": "1.0",
+    "version": "1.2",
     "description": "Adds many features to the pointercrate website.",
     "icons": {
         "16": "icons/icon-16.png",
@@ -16,7 +16,7 @@
     ],
     "content_scripts": [
         {
-            "matches": ["https://pointercrate.com/*"],
+            "matches": ["https://pointercrate.com/*", "https://wwww.pointercrate.com/*"],
             "js": ["demonlist.js"],
             "css": ["demonlist-style.css", "demonlist-old.css"],
             "run_at": "document_idle"
