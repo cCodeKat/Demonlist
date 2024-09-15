@@ -78,7 +78,7 @@ function customizeLevelPanel(record, demonlist, top) {
                 try {
                     flexbox.children[2].remove(); 
                     flexbox.children[1].children[2].remove();
-                } catch (e) {console.log("oops")}
+                } catch (e) {}
             }
             flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">\
             ${(record.demon.position <= 75) ? `<h3 style="margin-bottom: 0px; text-align: right">List%: ${listRequirement}%</h3>` : ''}\
@@ -120,7 +120,7 @@ function customizeLevelPanel(record, demonlist, top) {
             try {
                 flexbox.children[2].remove();
                 flexbox.children[1].children[2].remove();
-            } catch (e) {console.log('ooops')}
+            } catch (e) {}
         }
 
         flexbox.innerHTML += `<div style="margin-left: auto; margin-right: 0em; margin-right: 15px">\
@@ -133,7 +133,7 @@ function customizeLevelPanel(record, demonlist, top) {
     return parseFloat(listPointsCalculated)
 }
 
-async function personalizedDemonlistView(accountPanel) {
+async function personalizedDemonlistView() {
     let list_request = await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?limit=75`)).json();
     list_request = list_request.concat(await (await fetch(`https://pointercrate.com/api/v2/demons/listed/?after=75&limit=75`)).json());
 
@@ -178,13 +178,11 @@ async function personalizedDemonlistView(accountPanel) {
         customizeLevelPanel(record, demonlist, list_request)
     })
 
-    console.log(playerId)
-
     // Updating User Area text with List Points
     if (playerId !== -1) {
-        console.log(listPoints.toFixed(2))
-        console.log(accountPanel)
+        let accountPanel = document.getElementsByClassName('nav-item hover white')[2];
         accountPanel.children[0].children[0].innerHTML = `<span>${listPoints.toFixed(2)} POINTS</span>`;
+        accountPanel.children[0].children[1].innerHTML = `<span>${playerRequest.data.name}</span>`;
     }
 }
 
@@ -323,34 +321,38 @@ function controlBox() {
     });
 
     document.getElementById("runPersonalizedView").addEventListener("click", function() {
+        if (playerId === null) {playerId = -1; return;}
         playerId = document.getElementById("playerIdInput").getAttribute('data-id');
         playerName = document.getElementById("playerIdInput").value;
         response = `claimed-player" data-id="${playerId}">${playerName}</i> profile-display-name">${playerName}<`
-        accountPanel.children[0].children[0].innerHTML = '<span>LOGGED IN</span>';
-        accountPanel.children[0].children[1].innerHTML = `<span>${playerName}</span>`
+        // accountPanel.children[0].children[0].innerHTML = '<span>0.00 POINTS</span>';
+        // accountPanel.children[0].children[1].innerHTML = `<span>${playerName}</span>`
         personalizedDemonlistView(document.getElementsByClassName('nav-item hover white')[2]);
     });
 
     let playerList = document.getElementById("playerIdInputList");
     let playerSelector = document.getElementById("playerIdInput");
+    let debounceTimeout;
+
     playerSelector.addEventListener("input", async (input) => {
-        player_request = await ((await fetch(`https://pointercrate.com/api/v1/players/ranking/?limit=10&name_contains=${playerSelector.value}`)).json());
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+            player_request = await ((await fetch(`https://pointercrate.com/api/v1/players/ranking/?limit=10&name_contains=${playerSelector.value}`)).json());
 
-        while (playerList.firstChild) {
-            playerList.removeChild(playerList.firstChild);
-        }
+            while (playerList.firstChild) {
+                playerList.removeChild(playerList.firstChild);
+            }
 
-        player_request.forEach(player => {
-            let listItem = document.createElement('li');
-            listItem.textContent = `#${player.rank} ${player.name}`;
-            listItem.setAttribute('data-id', player.id);
-            playerList.appendChild(listItem);
-        });
+            player_request.forEach(player => {
+                let listItem = document.createElement('li');
+                listItem.textContent = `#${player.rank} ${player.name}`;
+                listItem.setAttribute('data-id', player.id);
+                playerList.appendChild(listItem);
+            });
+        }, 300);
     });
 
-    console.log("adding listener")
     playerList.addEventListener("click", (event) => {
-        console.log(event)
         let player = event.target;
         let id = player.getAttribute("data-id");
         let text = player.innerText;
@@ -453,7 +455,7 @@ async function main() {
         }
     } catch (e) {}
 
-    if (isDemonlist) { personalizedDemonlistView(response, accountPanel) }
+    if (isDemonlist) { personalizedDemonlistView(accountPanel) }
 
     // Poopstain's request :3
     if (document.location.pathname === "/demonlist/69") {
