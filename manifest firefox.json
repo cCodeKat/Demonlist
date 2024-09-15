@@ -16,7 +16,10 @@
     ],
     "content_scripts": [
         {
-            "matches": ["https://pointercrate.com/*", "https://wwww.pointercrate.com/*"],
+            "matches": [
+                "https://pointercrate.com/*", 
+                "https://wwww.pointercrate.com/*"
+            ],
             "js": ["demonlist.js"],
             "css": ["demonlist-style.css", "demonlist-old.css"],
             "run_at": "document_idle"
@@ -24,8 +27,21 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": ["supporters.txt", "demonlist-style.css", "demonlist-old.css"],
-            "matches": ["<all_urls>"]
+            "resources": [
+                "supporters.txt", 
+                "demonlist-style.css", 
+                "demonlist-old.css",
+                "icons/android-chrome-192x192.png",
+                "icons/android-chrome-512x512.png",
+                "icons/apple-touch-icon.png",
+                "icons/favicon-16x16.png",
+                "icons/favicon-32x32.png",
+                "icons/favicon.ico",
+                "icons/site.webmanifest"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
         }
     ],
     "browser_specific_settings": {
