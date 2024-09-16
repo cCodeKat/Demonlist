@@ -37,6 +37,10 @@ body {
     background: var(--dark-1);
 }
 
+.disable {
+    background-color: var(--light-2) !important;
+}
+
 header {
     & nav {
         background-color: var(--dark-2);
