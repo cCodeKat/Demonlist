@@ -433,16 +433,54 @@ function darkModeToggle(bool) {
     }
 }
 
+function statsViewerElements(data, parentNode, hasProgress) {
+    let elementArray = [];
+    dash = document.createTextNode(" - ");
+    data.forEach(record => {
+        let element = document.createElement('a');
+        element.href = hasProgress ? record.video : `/demonlist/permalink/${record.id}/`;
+        element.textContent = hasProgress ? record.demon.name : record.name;
+        let position = hasProgress ? record.demon.position : record.position;
+        if (position <= 75) {
+            element.style.fontWeight = 'bold';
+        } else if (position > 150) {
+            element.style.fontStyle = 'italic';
+            element.style.opacity = 0.5;
+        }
+        element.id = position;
+        elementArray.push(element);
+    });
+    if (elementArray.length === 0) {
+        none = document.createTextNode('None');
+        return none;
+    }
+
+    elementArray.sort((a, b) => a.id - b.id);
+
+    parentNode.replaceChildren();
+    elementArray.forEach((element) => {
+        parentNode.appendChild(element);
+        const dash = document.createTextNode(" - ");
+        parentNode.appendChild(dash);
+    });
+    parentNode.removeChild(parentNode.lastChild); // Remove the extra dash
+}
+
 function sortedStatsViewer(isNations) {
     if (isNations) {return;}
     let statsViewerBody = document.getElementById('beaten').parentNode.parentNode.parentNode;
-    let playerSelector = document.querySelectorAll('.selection-list');
+    let playerSelector = document.querySelector('.selection-list');
     playerSelector.addEventListener('click', async (event) => {
         let player = event.target;
         let id = player.getAttribute("data-id");
         let playerRequest = await (await fetch(`https://pointercrate.com/api/v1/players/${id}`)).json();
 
-
+        let verifiedFormatted = playerRequest.data.verified.map(element => ({ demon: element }));
+        statsViewerElements(verifiedFormatted.concat(playerRequest.data.records.filter(record => record.progress === 100)), document.getElementById('beaten'), true);
+        statsViewerElements(playerRequest.data.created, document.getElementById('created'));
+        statsViewerElements(playerRequest.data.published, document.getElementById('published'));
+        statsViewerElements(playerRequest.data.verified, document.getElementById('verified'));
+        statsViewerElements(playerRequest.data.records.filter(record => record.progress < 100), document.getElementById('progress'), true);
     });
 }
 
