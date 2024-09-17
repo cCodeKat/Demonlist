@@ -320,3 +320,32 @@ footer div:last-of-type {margin-bottom: 24px;}
     width: inherit;
     cursor: pointer;
 }
+
+input[type="range" i] {
+    /* -webkit-appearance: slider-horizontal; */
+    padding: initial;
+    border: initial;
+    margin: 2px;
+    color: #909090;
+}
+input[type="range" i]::-webkit-slider-container, input[type="range" i]::-webkit-media-slider-container {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    -webkit-user-modify: read-only !important;
+    display: flex;
+}
+input[type="range" i]::-webkit-slider-runnable-track {
+    flex: 1;
+    min-width: 0;
+    -webkit-align-self: center;
+    box-sizing: border-box;
+    -webkit-user-modify: read-only !important;
+    display: block;
+}
+input[type="range" i]::-webkit-slider-thumb, input[type="range" i]::-webkit-media-slider-thumb {
+    -webkit-appearance: sliderthumb-horizontal;
+    box-sizing: border-box;
+    -webkit-user-modify: read-only !important;
+    display: block;
+}
