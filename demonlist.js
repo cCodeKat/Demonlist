@@ -17,7 +17,7 @@ var isDemonlist = [
         "/demonlist/", "/demonlist", "/demonlist/?timemachine=true/", "/demonlist/?timemachine=true", "/demonlist/?submitter=true/", "/demonlist/?submitter=true"
     ].includes(document.location.pathname);
 var isStatsViewer = [
-        "/demonlist/statsviewer/", "demonlist/statsviewer"
+        "/demonlist/statsviewer/", "/demonlist/statsviewer", "/demonlist/statsviewer/nations/", "/demonlist/statsviewer/nations", 
     ].includes(document.location.pathname);
 var levelCollectionParent = document.getElementsByClassName('left')[0];
 var levelCollection = [...levelCollectionParent.children].slice(2);
@@ -433,22 +433,70 @@ function darkModeToggle(bool) {
     }
 }
 
-function statsViewerElements(data, parentNode, hasProgress) {
+function statsViewerElements(data, parentNode, hasProgress, _isNations) {
     let elementArray = [];
+    let type = parentNode.id;
     dash = document.createTextNode(" - ");
     data.forEach(record => {
         let element = document.createElement('a');
-        element.href = hasProgress ? record.video : `/demonlist/permalink/${record.id}/`;
-        element.textContent = hasProgress ? record.demon.name : record.name;
-        let position = hasProgress ? record.demon.position : record.position;
+        element.href = _isNations || !hasProgress ? `/demonlist/permalink/${record.id}/` : record.video;
+        if (_isNations) {
+            if (type === 'unbeaten') {
+                element.textContent = record.name;
+            } else {
+                element.textContent = record.demon;
+            }
+        } else {
+            element.textContent = hasProgress ? record.demon.name : record.name;
+        }
+        let position = hasProgress && !_isNations ? record.demon.position : record.position;
+
         if (position <= 75) {
             element.style.fontWeight = 'bold';
         } else if (position > 150) {
             element.style.fontStyle = 'italic';
             element.style.opacity = 0.5;
         }
+
+        if (type === 'progress') {
+            element.textContent += ` ${record.progress}%`;
+        }
+
+        if (_isNations && type !== 'unbeaten') {
+            let playerCount, players;
+            if (type !== 'verified' && type !== 'published') {
+                playerCount = record.players.length;
+                players = record.players;
+            } else {
+                playerCount = 1;
+                players = [record.player];
+            }
+            let tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.appendChild(element);
+
+            let tooltiptext = document.createElement('div');
+            tooltiptext.className = 'tooltiptext fade';
+            let title = document.createElement('b');
+            switch (type) {
+                case 'beaten': title.textContent = `Beaten by ${playerCount} player${playerCount > 1 ? "s" : ""} in this country: `; break;
+                case 'created': title.textContent = `(Co)created by ${playerCount} player${playerCount > 1 ? "s" : ""} in this country: `; break;
+                case 'verified': title.textContent = "Verified by: "; break;
+                case 'published': title.textContent = "Published by: "; break;
+                case 'progress': title.textContent = `Achieved by ${playerCount} player${playerCount > 1 ? "s" : ""} in this country: `; break;
+                default: console.error("How did you reach this error??? "); break;
+            }
+
+            let player_text = document.createTextNode(players.join(', '));
+            tooltiptext.appendChild(title);
+            tooltiptext.appendChild(player_text);
+            tooltip.appendChild(tooltiptext);
+            element = tooltip;
+        }
+
         element.id = position;
         elementArray.push(element);
+
     });
     if (elementArray.length === 0) {
         none = document.createTextNode('None');
@@ -467,27 +515,46 @@ function statsViewerElements(data, parentNode, hasProgress) {
 }
 
 function sortedStatsViewer(isNations) {
-    if (isNations) {return;}
+    // if (isNations) {return;}
     let statsViewerBody = document.getElementById('beaten').parentNode.parentNode.parentNode;
-    let playerSelector = document.querySelector('.selection-list');
-    playerSelector.addEventListener('click', async (event) => {
+    let selector = document.querySelector('.selection-list');
+    selector.addEventListener('click', async (event) => {
+        console.log(event.target)
         let player = event.target;
         let id = player.getAttribute("data-id");
-        let playerRequest = await (await fetch(`https://pointercrate.com/api/v1/players/${id}`)).json();
+        console.log(id);
+        let dataRequest;
+        console.log(isNations);
+        if (isNations) {
+            dataRequest = await (await fetch(`https://pointercrate.com/api/v1/nationalities/${id}/`)).json();
+        } else {
+            dataRequest = await (await fetch(`https://pointercrate.com/api/v1/players/${id}/`)).json();
+        }
+        console.log(dataRequest);
 
-        let verifiedFormatted = playerRequest.data.verified.map(element => ({ demon: element }));
-        statsViewerElements(verifiedFormatted.concat(playerRequest.data.records.filter(record => record.progress === 100)), document.getElementById('beaten'), true);
-        statsViewerElements(playerRequest.data.created, document.getElementById('created'));
-        statsViewerElements(playerRequest.data.published, document.getElementById('published'));
-        statsViewerElements(playerRequest.data.verified, document.getElementById('verified'));
-        statsViewerElements(playerRequest.data.records.filter(record => record.progress < 100), document.getElementById('progress'), true);
+        let beatenLevels = dataRequest.data.records;
+        if (!isNations) {
+            beatenLevels = beatenLevels.concat(dataRequest.data.verified.map(element => ({ demon: element })))
+        };
+        statsViewerElements(beatenLevels, document.getElementById('beaten'), true, isNations);
+        statsViewerElements(dataRequest.data.created, document.getElementById('created'), false, isNations);
+        statsViewerElements(dataRequest.data.published, document.getElementById('published'), false, isNations);
+        statsViewerElements(dataRequest.data.verified, document.getElementById('verified'), false, isNations);
+        statsViewerElements(dataRequest.data.records.filter(record => record.progress < 100), document.getElementById('progress'), true, isNations);
+        if (isNations) {
+            statsViewerElements(dataRequest.data.unbeaten, document.getElementById('unbeaten'), false, isNations);
+        };
     });
 }
 
 async function main() {
     chrome.storage.local.get('darkmode', function(result) {
-        darkModeToggle(result.darkmode)
-    })
+        let darkmode = result.darkmode;
+        if (darkmode === undefined) { // Default to dark mode
+            darkmode = true;
+        }
+        darkModeToggle(darkmode);
+    });
 
     if (isDemonlist) {
         supporterText();
@@ -530,11 +597,11 @@ async function main() {
     if (isDemonlist) {
         personalizedDemonlistView(); 
     } else if (isStatsViewer) {
-        sortedStatsViewer(["/demonlist/statsviewer/nations", "demonlist/statsviewer/nations/"].includes(document.location.pathname));
+        sortedStatsViewer(["/demonlist/statsviewer/nations", "/demonlist/statsviewer/nations/"].includes(document.location.pathname));
     }
 
     // Poopstain's request :3
-    if (document.location.pathname === "/demonlist/69") {
+    if (document.location.pathname === "/demonlist/69" || document.location.pathname === "/demonlist/69/") {
         var footer = document.getElementsByTagName("footer")[0]; 
         footer.insertAdjacentHTML('beforeend', '<img src="https://i.postimg.cc/MHv6DPFn/GIF-221116-170304.gif" />');
     };

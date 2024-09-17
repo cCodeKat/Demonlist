@@ -335,3 +335,8 @@ input[type="range" i]::-webkit-slider-thumb, input[type="range" i]::-webkit-medi
     -webkit-user-modify: read-only !important;
     display: block;
 }
+
+.tooltiptext {
+    background-color: var(--light-2) !important;
+    color: var(--text-primary) !important;
+}
