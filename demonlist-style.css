@@ -354,3 +354,18 @@ input[type="range" i]::-webkit-slider-thumb, input[type="range" i]::-webkit-medi
     background-color: var(--dark-2) !important;
     color: var(--text-primary-d) !important;
 }
+
+#supporters ul {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-content: center;
+    margin: 0% 5%;
+    font-variant: small-caps;
+}
+
+#supporters li {
+    display: inline-block;
+    margin: 2px;
+    overflow: hidden;
+}

@@ -21,7 +21,7 @@ var isStatsViewer = [
     ].includes(document.location.pathname);
 var levelCollectionParent = document.getElementsByClassName('left')[0];
 var levelCollection = [...levelCollectionParent.children].slice(2);
-var accountPanel = document.getElementsByClassName('nav-item hover white')[1].children[0]
+var accountPanel = document.getElementsByClassName('nav-item hover white')[1].children[0];
 
 
 function pointsFormula(position, progress, requirement) {
@@ -52,10 +52,19 @@ function pointsFormula(position, progress, requirement) {
 }
 
 function supporterText() {
-    const x = document.getElementById('editors');
-    x.innerHTML += '<div class="underlined"><h2>Demonlist+ Supporters</h2></div>'
-    x.innerHTML += '<p>You should check out those people, they have some really cool content! People on this list have supported the development of the Demonlist+ extension!</p>'
-    x.innerHTML += '<ul style="line-height: 30px" id="supporters">';
+    const editorPanel = document.getElementById('editors');
+    let supportPanel = (document.getElementById('rules')).cloneNode(true);
+    supportPanel.id = 'supporters';
+    supportPanel.children[0].textContent = 'Demonlist+ Supporters';
+    supportPanel.children[1].textContent = 'You should check out those people, they have some really cool content! \
+    People on this list have supported the development of the Demonlist+ extension!';
+    supportPanel.children[2].textContent = 'Support Demonlist+!';
+    supportPanel.children[2].href = "https://www.buymeacoffee.com/codekat";
+    supportPanel.children[2].style.marginTop = '12px';
+
+    let supporters_list = document.createElement('ul');
+    supporters_list.style.lineHeight = '30px';
+
     const supportersURL = chrome.runtime.getURL("supporters.txt");
     fetch(supportersURL)
         .then((res) => res.text())
@@ -63,10 +72,15 @@ function supporterText() {
             text = text.split('\n')
             text.forEach((line) => {
                 line = line.split(' ');
-                document.getElementById('supporters').innerHTML += `<li><a target="_blank" href="${line[1]}">${line[0]}</a></li>`;
-            })
-        })
-        .then(() => {x.innerHTML += '</ul><a class="blue hover button" href="https://www.buymeacoffee.com/codekat" style="margin-top: 12px">Support Demonlist+!</a>';});
+                let supporter = document.createElement('li');
+                let a = document.createElement('a');
+                a.target = "_blank"; a.href = line[1]; a.textContent = line[0];
+                supporter.appendChild(a);
+                supporters_list.appendChild(supporter);
+            });
+        });
+    supportPanel.insertBefore(supporters_list, supportPanel.children[2]);
+    editorPanel.parentNode.insertBefore(supportPanel, editorPanel);
 }
 
 function customizeLevelPanel(record, demonlist, top) {
@@ -82,10 +96,10 @@ function customizeLevelPanel(record, demonlist, top) {
 
     // For uncompleted levels
     if (record.progress === 0) {
-        level_section.id = 'uncompleted'
+        level_section.id = 'uncompleted';
         if (document.getElementById('submission-thumbnails').checked) {
             try {
-                level_section.children[0].children[0].children[0].href = `${level_data.video}`
+                level_section.children[0].children[0].children[0].href = `${level_data.video}`;
                 level_section.children[0].children[0].style.setProperty('background-image', `url("${level_data.thumbnail}")`);
                 level_section.children[0].children[0].setAttribute('data-property-value', `url("${level_data.thumbnail}")`);
             } catch (e) {console.error("Failed to load video for " + record.demon.name + ". Video: " + record.video)}
@@ -286,7 +300,7 @@ function handleCheckboxChange(event) {
 
 function controlBox() {
     a = document.getElementById("editors")
-    a.insertAdjacentHTML('afterend', '<section class="panel fade js-scroll-anim" id="control-box" data-anim="fade" style="opacity: 1;"><h2 class="underlined pad">Demonlist+ Settings</h2></section>')
+    a.insertAdjacentHTML('beforebegin', '<section class="panel fade js-scroll-anim" id="control-box" data-anim="fade" style="opacity: 1;"><h2 class="underlined pad">Demonlist+ Settings</h2></section>')
     controlBoxElement = document.getElementById("control-box")
     controlBoxElement.children[0].insertAdjacentHTML('afterend', `\
     <div id="view-checkboxes" style="text-align: left">\
@@ -453,13 +467,14 @@ function statsViewerElements(data, parentNode, hasProgress, _isNations) {
 
         if (position <= 75) {
             element.style.fontWeight = 'bold';
+            element.style.fontSize = "100%";
         } else if (position > 150) {
             element.style.fontStyle = 'italic';
             element.style.opacity = 0.5;
         }
 
         if (type === 'progress') {
-            element.textContent += ` ${record.progress}%`;
+            element.textContent += ` (${record.progress}%)`;
         }
 
         if (_isNations && type !== 'unbeaten') {
@@ -515,22 +530,23 @@ function statsViewerElements(data, parentNode, hasProgress, _isNations) {
 }
 
 function sortedStatsViewer(isNations) {
-    // if (isNations) {return;}
     let statsViewerBody = document.getElementById('beaten').parentNode.parentNode.parentNode;
     let selector = document.querySelector('.selection-list');
-    selector.addEventListener('click', async (event) => {
-        console.log(event.target)
+    selector.addEventListener("click", async (event) => {
         let player = event.target;
+
+        if (!player || !player.hasAttribute("data-id")) {
+            console.error("Invalid target or missing data-id");
+            return;
+        }
+
         let id = player.getAttribute("data-id");
-        console.log(id);
         let dataRequest;
-        console.log(isNations);
         if (isNations) {
             dataRequest = await (await fetch(`https://pointercrate.com/api/v1/nationalities/${id}/`)).json();
         } else {
             dataRequest = await (await fetch(`https://pointercrate.com/api/v1/players/${id}/`)).json();
         }
-        console.log(dataRequest);
 
         let beatenLevels = dataRequest.data.records;
         if (!isNations) {
@@ -557,8 +573,8 @@ async function main() {
     });
 
     if (isDemonlist) {
-        supporterText();
         controlBox();
+        supporterText();
         loadLegacy();
     };
 
